@@ -191,7 +191,7 @@ body {
 }
 
 #blackOverlay::after {
-  content: "Click to Start";
+  content: "Start";
   position: absolute;
   font-family: 'Courier New', monospace;
   font-size: 28px;

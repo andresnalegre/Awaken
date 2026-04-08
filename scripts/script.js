@@ -3,6 +3,7 @@ const GlitchText = {
     chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()",
     isRunning: false,
     animationFrameId: null,
+    _resizeHandler: null,
 
     calculateFontSize() {
         const width = window.innerWidth;
@@ -15,6 +16,11 @@ const GlitchText = {
     init(overlayTextElement) {
         if (this.isRunning) {
             this.stop();
+        }
+
+        if (this._resizeHandler) {
+            window.removeEventListener('resize', this._resizeHandler);
+            this._resizeHandler = null;
         }
 
         this.isRunning = true;
@@ -40,8 +46,8 @@ const GlitchText = {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        const staticText = "FOLLOW THE WHITE ";
-        const targetText = "RABBIT";
+        const staticText = "FOLLOW THE ";
+        const targetText = "WHITE RABBIT";
 
         const textMetricsStatic = ctx.measureText(staticText);
         const textMetricsTarget = ctx.measureText(targetText);
@@ -61,7 +67,7 @@ const GlitchText = {
 
         this.startGlitch(ctx, textX, textY, staticText, targetText, boundingBox, canvas);
 
-        window.addEventListener('resize', () => {
+        this._resizeHandler = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             const newFontSize = this.calculateFontSize();
@@ -73,7 +79,9 @@ const GlitchText = {
             ctx.shadowBlur = newFontSize / 5;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
-        });
+        };
+
+        window.addEventListener('resize', this._resizeHandler);
     },
 
     startGlitch(ctx, textX, textY, staticText, targetText, boundingBox, canvas) {
@@ -122,12 +130,16 @@ const GlitchText = {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
+        if (this._resizeHandler) {
+            window.removeEventListener('resize', this._resizeHandler);
+            this._resizeHandler = null;
+        }
     }
 };
 
 /* Main Intro & Matrix Flow */
 (() => {
-    const messages = ["I’ve been waiting for you...", "let your curiosity guide you..."];
+    const messages = ["I've been waiting for you...", "let your curiosity guide you..."];
     const typingText = document.getElementById("typingText");
 
     let matrixAudio = null;
@@ -177,11 +189,7 @@ const GlitchText = {
 
         openingVideoContainer.appendChild(openingVideo);
 
-        try {
-            openingVideo.load();
-        } catch (e) {
-            console.warn('Erro ao chamar load() do vídeo:', e);
-        }
+        openingVideo.load();
     }
 
     function removeOpeningVideo() {
@@ -464,7 +472,7 @@ const GlitchText = {
         });
     }
 
-    /* Matrix Canva */
+    /* Matrix Canvas */
     function startMatrixExperience() {
         const matrixContainer = document.getElementById("matrixContainer");
         const overlayText = document.getElementById("overlayText");
@@ -505,6 +513,8 @@ const GlitchText = {
                 "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789@#$%^&*";
             this.columns = [];
             this.drops = [];
+            this.animationFrameId = null;
+            this._resizeHandler = null;
 
             this.container.style.overflow = "hidden";
             this.container.style.position = "fixed";
@@ -531,7 +541,10 @@ const GlitchText = {
             this.canvas.style.height = "100%";
 
             this.resize();
-            window.addEventListener("resize", () => this.resize());
+
+            this._resizeHandler = () => this.resize();
+            window.addEventListener("resize", this._resizeHandler);
+
             this.initDrops();
         }
 
@@ -550,8 +563,9 @@ const GlitchText = {
             this.columns = Math.ceil(this.canvas.width / this.fontSize) + 1;
             this.ctx.font = `${this.fontSize}px monospace`;
 
-            this.initDrops();
             isMobileDevice = window.innerWidth <= 768;
+
+            this.initDrops();
         }
 
         initDrops() {
@@ -582,9 +596,23 @@ const GlitchText = {
                 this.drops[i] += 0.7;
             }
 
-            setTimeout(() => {
+            this.animationFrameId = setTimeout(() => {
                 requestAnimationFrame(() => this.animate());
             }, 33);
+        }
+
+        destroy() {
+            if (this.animationFrameId) {
+                clearTimeout(this.animationFrameId);
+                this.animationFrameId = null;
+            }
+            if (this._resizeHandler) {
+                window.removeEventListener("resize", this._resizeHandler);
+                this._resizeHandler = null;
+            }
+            if (this.canvas && this.canvas.parentNode) {
+                this.canvas.parentNode.removeChild(this.canvas);
+            }
         }
     }
 
