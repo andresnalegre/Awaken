@@ -46,26 +46,50 @@ const GlitchText = {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        const staticText = "FOLLOW THE ";
+        const staticText = "FOLLOW THE";
         const targetText = "WHITE RABBIT";
-
-        const textMetricsStatic = ctx.measureText(staticText);
-        const textMetricsTarget = ctx.measureText(targetText);
-        const totalTextWidth = ctx.measureText(staticText + targetText).width;
-
-        const boundingBox = {
-            x: textX - totalTextWidth / 2 + textMetricsStatic.width,
-            y: textY - fontSize / 2,
-            width: textMetricsTarget.width,
-            height: fontSize
-        };
 
         ctx.shadowColor = '#0F0';
         ctx.shadowBlur = fontSize / 5;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
 
-        this.startGlitch(ctx, textX, textY, staticText, targetText, boundingBox, canvas);
+        // Clickable WHITE RABBIT link rendered as DOM element below canvas text
+        const rabbitLink = document.createElement('a');
+        rabbitLink.href = 'https://whiterabbitclub.ie/';
+        rabbitLink.target = '_blank';
+        rabbitLink.rel = 'noopener noreferrer';
+        rabbitLink.textContent = targetText;
+        rabbitLink.style.cssText = `
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translateX(-50%) translateY(${Math.round(fontSize * 0.5)}px);
+            font-family: 'Courier New', monospace;
+            font-size: ${fontSize}px;
+            font-weight: bold;
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+            z-index: 15;
+            letter-spacing: 2px;
+            white-space: nowrap;
+            display: block;
+            text-align: center;
+            text-shadow: 0 0 ${Math.round(fontSize / 5)}px #0F0, 0 0 ${Math.round(fontSize / 3)}px #0F0;
+            transition: text-shadow 0.2s ease, color 0.2s ease;
+        `;
+        rabbitLink.addEventListener('mouseenter', () => {
+            rabbitLink.style.textShadow = `0 0 ${Math.round(fontSize / 3)}px #fff, 0 0 ${Math.round(fontSize / 2)}px #0F0, 0 0 ${fontSize}px #0F0`;
+            rabbitLink.style.color = '#0F0';
+        });
+        rabbitLink.addEventListener('mouseleave', () => {
+            rabbitLink.style.textShadow = `0 0 ${Math.round(fontSize / 5)}px #0F0, 0 0 ${Math.round(fontSize / 3)}px #0F0`;
+            rabbitLink.style.color = '#fff';
+        });
+        overlayTextElement.appendChild(rabbitLink);
+
+        this.startGlitch(ctx, textX, textY, staticText, canvas);
 
         this._resizeHandler = () => {
             canvas.width = window.innerWidth;
@@ -79,38 +103,35 @@ const GlitchText = {
             ctx.shadowBlur = newFontSize / 5;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
+            rabbitLink.style.fontSize = `${newFontSize}px`;
+            rabbitLink.style.transform = `translateX(-50%) translateY(${Math.round(newFontSize * 0.5)}px)`;
+            rabbitLink.style.textShadow = `0 0 ${Math.round(newFontSize / 5)}px #0F0, 0 0 ${Math.round(newFontSize / 3)}px #0F0`;
         };
 
         window.addEventListener('resize', this._resizeHandler);
     },
 
-    startGlitch(ctx, textX, textY, staticText, targetText, boundingBox, canvas) {
+    startGlitch(ctx, textX, textY, staticText, canvas) {
         let lastTime = 0;
         const glitchInterval = 200;
 
         const glitchEffect = (currentTime) => {
             if (currentTime - lastTime > glitchInterval) {
-                const glitchedTarget = targetText
-                    .split("")
-                    .map(char => {
-                        if (Math.random() < 0.3) {
-                            return this.chars[Math.floor(Math.random() * this.chars.length)];
-                        }
-                        return char;
-                    })
-                    .join("");
+                // "FOLLOW THE" drawn above center; WHITE RABBIT is a DOM link below
+                const fontSize = this.calculateFontSize();
+                const lineY = textY - Math.round(fontSize * 0.7);
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 if (Math.random() < 0.05) {
                     ctx.fillStyle = '#0F0';
                     const offset = Math.random() * 5;
-                    ctx.fillText(staticText + glitchedTarget, textX + offset, textY);
+                    ctx.fillText(staticText, textX + offset, lineY);
                     ctx.fillStyle = '#FFF';
-                    ctx.fillText(staticText + glitchedTarget, textX - offset, textY);
+                    ctx.fillText(staticText, textX - offset, lineY);
                 } else {
                     ctx.fillStyle = '#FFF';
-                    ctx.fillText(staticText + glitchedTarget, textX, textY);
+                    ctx.fillText(staticText, textX, lineY);
                 }
 
                 lastTime = currentTime;
@@ -495,16 +516,6 @@ const GlitchText = {
         if (audioInitialized && messageSequenceComplete && matrixAudio && canStartAudio) {
             matrixAudio.play().catch(() => {});
         }
-
-        setTimeout(() => {
-            const infoContainer = document.getElementById("infoContainer");
-            infoContainer.classList.remove("hidden");
-            infoContainer.style.opacity = "0";
-            requestAnimationFrame(() => {
-                infoContainer.style.transition = "opacity 1s ease-in-out";
-                infoContainer.style.opacity = "1";
-            });
-        }, 2000);
     }
 
     /* Matrix Rain */
