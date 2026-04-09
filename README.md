@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/whiterabbit.png" alt="White Rabbit" width="120" />
+  <img src="assets/awaken.png" alt="White Rabbit" width="200" />
 
   # Awaken
 
@@ -34,7 +34,14 @@ perhaps it has already begun.
 
 **Make your choice.**
 
-</div>
+<a href="https://whiterabbitclub.ie/" target="_blank">
+  <img src="assets/choice-red.svg" alt="Red Choice" width="300" />
+</a>
 
+<a href="https://www.google.com" target="_blank">
+  <img src="assets/choice-blue.svg" alt="Blue Choice" width="300" />
+</a>
+
+</div>
 
 
