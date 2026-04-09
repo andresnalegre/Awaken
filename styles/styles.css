@@ -4,15 +4,6 @@
   --bright-green: #00ff00;
   --white: #fff;
   --black: #000;
-  --red: #f00;
-  --transparent-green: rgba(0, 255, 0, 0.1);
-  --transparent-green-hover: rgba(0, 255, 0, 0.2);
-  --transparent-green-active: rgba(0, 255, 0, 0.3);
-  --transparent-red: rgba(255, 0, 0, 0.1);
-  --github-bg: #ffffff;
-  --linkedin-bg: #0077B7;
-  --codepen-bg: #FFD700;
-  --dev-credit-color: #64d8cb;
 }
 
 * {
@@ -68,116 +59,20 @@ body {
   height: 100%;
 }
 
-/* Overlay Text */
+/* Overlay — container for canvas + rabbit link */
 #overlayText {
-  font-size: 3rem;
-  font-weight: bold;
-  color: var(--white);
-  text-align: center;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 20;
+  pointer-events: none; /* canvas is pointer-events:none; link overrides this inline */
   animation: fadeInPulse 3s ease-in-out forwards;
-  white-space: nowrap;
-  text-shadow: 
-      0 0 20px rgba(255, 255, 255, 0.5),
-      0 0 40px rgba(0, 255, 0, 0.3);
 }
 
 .hidden {
   display: none !important;
-}
-
-/* Social Icons */
-.social-icons {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: center;
-}
-
-.social-icons a,
-#rabbitButton {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-/* Icon Backgrounds */
-.github-bg {
-  background-color: var(--github-bg);
-}
-
-.linkedin-bg {
-  background-color: var(--linkedin-bg);
-}
-
-.codepen-bg {
-  background-color: var(--codepen-bg);
-}
-
-/* Rabbit Button */
-#rabbitButton {
-  background: rgba(0, 0, 0, 0.9);
-}
-
-.social-icons a:hover,
-#rabbitButton:hover {
-  box-shadow: 0 0 14px rgba(0, 255, 0, 0.9);
-  transform: scale(1.06);
-}
-
-.social-icon {
-  width: 24px;
-  height: 24px;
-}
-
-#rabbitButton img {
-  width: 24px;
-  height: 24px;
-  object-fit: cover;
-  border-radius: 50%;
-  filter: drop-shadow(0 0 4px #00ff00);
-  pointer-events: none;
-}
-
-#infoContainer {
-  position: fixed;
-  right: 2rem;
-  bottom: 2rem;
-  padding: 1rem 1.25rem;
-  border-radius: 0.75rem;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid rgba(0, 255, 0, 0.5);
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.35);
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  z-index: 1000;
-}
-
-#developerCredit {
-  color: var(--dev-credit-color);
-  font-size: 0.9rem;
-  text-align: center;
-  font-family: 'Courier New', monospace;
-}
-
-.developer-link {
-  color: var(--dev-credit-color);
-  text-decoration: none;
-}
-
-.developer-link:hover {
-  text-decoration: underline;
 }
 
 /* Start Overlay */
@@ -188,6 +83,7 @@ body {
   color: rgba(0, 255, 0, 0.3);
   font-size: 24px;
   cursor: pointer;
+  position: fixed;
 }
 
 #blackOverlay::after {
@@ -198,7 +94,7 @@ body {
   font-weight: bold;
   letter-spacing: 2px;
   color: var(--bright-green);
-  text-shadow: 
+  text-shadow:
       0 0 10px var(--bright-green),
       0 0 20px var(--bright-green),
       0 0 30px var(--bright-green);
@@ -213,163 +109,42 @@ body {
 }
 
 @keyframes fadeInPulse {
-  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
-  50% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  0%   { opacity: 0; }
+  40%  { opacity: 1; }
+  100% { opacity: 1; }
 }
 
 @keyframes enhancedPulse {
-  0% { opacity: 0.3; transform: scale(0.98); }
-  50% { opacity: 1; transform: scale(1.02); }
+  0%   { opacity: 0.3; transform: scale(0.98); }
+  50%  { opacity: 1;   transform: scale(1.02); }
   100% { opacity: 0.3; transform: scale(0.98); }
 }
 
-/* Media Queries */
-@media (max-width: 768px) {
-  #infoContainer {
-    right: 1rem;
-    left: 1rem;
-    bottom: 1rem;
-    justify-content: center;
-  }
-
-  #developerCredit {
-    text-align: center;
-    width: 100%;
-  }
-
-  .social-icons {
-    justify-content: center;
-  }
-}
-
+/* Responsive typing text */
 @media screen and (max-width: 320px) {
-  #typingText {
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-    top: -10%;
-  }
-
-  #overlayText {
-    font-size: 1.2rem;
-    top: 40%;
-  }
-
-  .social-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .social-icons {
-    gap: 12px;
-    top: 44%;
-  }
-
-  .audio-toggle {
-    padding: 8px;
-  }
+  #typingText { font-size: 0.9rem; margin-bottom: 5px; }
 }
 
 @media screen and (min-width: 321px) and (max-width: 480px) {
-  #typingText {
-    font-size: 1.1rem;
-    top: -10%;
-  }
-
-  #overlayText {
-    font-size: 1.5rem;
-    top: 42%;
-  }
-
-  .social-icon {
-    width: 30px;
-    height: 30px;
-  }
-
-  .social-icons {
-    gap: 15px;
-    top: 46%;
-  }
+  #typingText { font-size: 1.1rem; }
 }
 
 @media screen and (min-width: 481px) and (max-width: 768px) {
-  #typingText {
-    font-size: 1.3rem;
-    top: -10%;
-  }
-
-  #overlayText {
-    font-size: 2rem;
-    top: 45%;
-  }
-
-  .social-icon {
-    width: 32px;
-    height: 32px;
-  }
-
-  .social-icons {
-    top: 50%;
-  }
+  #typingText { font-size: 1.3rem; }
 }
 
 @media screen and (min-width: 769px) and (max-width: 1024px) {
-  #typingText {
-    font-size: 1.4rem;
-  }
-
-  #overlayText {
-    font-size: 2.8rem;
-  }
-
-  .social-icons {
-    top: 55%;
-    gap: 0px;
-  }
+  #typingText { font-size: 1.4rem; }
 }
 
 @media screen and (min-width: 1025px) and (max-width: 1919px) {
-  #typingText {
-    font-size: 1.4rem;
-  }
-
-  #overlayText {
-    font-size: 2.8rem;
-  }
-
-  .social-icons {
-    top: 60%;
-  }
+  #typingText { font-size: 1.4rem; }
 }
 
 @media screen and (max-height: 480px) and (orientation: landscape) {
-  .social-icons {
-    top: 65%;
-  }
-
-  #typingText {
-    font-size: 1.1rem;
-    top: -20%;
-  }
-
-  #overlayText {
-    font-size: 1.4rem;
-    top: 35%;
-  }
+  #typingText { font-size: 1.1rem; }
 }
 
 @media screen and (min-width: 1920px) {
-  #typingText {
-    font-size: 1.8rem;
-    top: -35%;
-  }
-
-  #overlayText {
-    font-size: 3.5rem;
-  }
-
-  .social-icon {
-    width: 42px;
-    height: 42px;
-  }
+  #typingText { font-size: 1.8rem; }
 }

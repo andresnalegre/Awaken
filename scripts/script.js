@@ -4,13 +4,24 @@ const GlitchText = {
     isRunning: false,
     animationFrameId: null,
     _resizeHandler: null,
+    _rabbitLink: null,
 
     calculateFontSize() {
         const width = window.innerWidth;
-        if (width < 600) {
-            return Math.max(24, Math.floor(width / 15));
-        }
+        if (width < 360) return 20;
+        if (width < 480) return 24;
+        if (width < 600) return 30;
+        if (width < 768) return 36;
         return 48;
+    },
+
+    updateRabbitLink(fontSize) {
+        if (!this._rabbitLink) return;
+        const link = this._rabbitLink;
+        link.style.fontSize = `${fontSize}px`;
+        link.style.textShadow = `0 0 ${Math.round(fontSize / 5)}px #0F0, 0 0 ${Math.round(fontSize / 3)}px #0F0`;
+        // Shift down from center by half a line height so it sits below "FOLLOW THE"
+        link.style.transform = `translateX(-50%) translateY(${Math.round(fontSize * 0.5)}px)`;
     },
 
     init(overlayTextElement) {
@@ -25,92 +36,110 @@ const GlitchText = {
 
         this.isRunning = true;
 
+        // Canvas for "FOLLOW THE" glitch
         const canvas = document.createElement('canvas');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
         canvas.style.position = 'absolute';
-        canvas.style.top = '50%';
-        canvas.style.left = '50%';
-        canvas.style.transform = 'translate(-50%, -50%)';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
         canvas.style.zIndex = '10';
-
+        canvas.style.pointerEvents = 'none';
         overlayTextElement.appendChild(canvas);
 
         const ctx = canvas.getContext('2d');
-        const textX = canvas.width / 2;
-        const textY = canvas.height / 2;
-
-        const fontSize = this.calculateFontSize();
-        ctx.font = `bold ${fontSize}px 'Courier New'`;
-        ctx.fillStyle = "rgba(255, 255, 255, 1)";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        const staticText = "FOLLOW THE ";
+        const staticText = "FOLLOW THE";
         const targetText = "WHITE RABBIT";
 
-        const textMetricsStatic = ctx.measureText(staticText);
-        const textMetricsTarget = ctx.measureText(targetText);
-        const totalTextWidth = ctx.measureText(staticText + targetText).width;
+        // Clickable WHITE RABBIT link
+        const rabbitLink = document.createElement('a');
+        this._rabbitLink = rabbitLink;
+        rabbitLink.href = 'https://whiterabbitclub.ie/';
+        rabbitLink.target = '_blank';
+        rabbitLink.rel = 'noopener noreferrer';
+        rabbitLink.textContent = targetText;
+        rabbitLink.style.cssText = `
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+            z-index: 15;
+            letter-spacing: 2px;
+            transition: text-shadow 0.2s ease, color 0.2s ease;
+            white-space: nowrap;
+            display: block;
+            text-align: center;
+        `;
+        overlayTextElement.appendChild(rabbitLink);
 
-        const boundingBox = {
-            x: textX - totalTextWidth / 2 + textMetricsStatic.width,
-            y: textY - fontSize / 2,
-            width: textMetricsTarget.width,
-            height: fontSize
-        };
-
-        ctx.shadowColor = '#0F0';
-        ctx.shadowBlur = fontSize / 5;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-
-        this.startGlitch(ctx, textX, textY, staticText, targetText, boundingBox, canvas);
-
-        this._resizeHandler = () => {
+        const setupCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            const newFontSize = this.calculateFontSize();
-            ctx.font = `bold ${newFontSize}px 'Courier New'`;
-            ctx.fillStyle = "rgba(255, 255, 255, 1)";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
+        };
+
+        const applyCtxStyles = (fontSize) => {
+            ctx.font = `bold ${fontSize}px 'Courier New'`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
             ctx.shadowColor = '#0F0';
-            ctx.shadowBlur = newFontSize / 5;
+            ctx.shadowBlur = Math.round(fontSize / 5);
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
         };
 
+        setupCanvas();
+        applyCtxStyles(this.calculateFontSize());
+        this.updateRabbitLink(this.calculateFontSize());
+
+        rabbitLink.addEventListener('mouseenter', () => {
+            const fs = this.calculateFontSize();
+            rabbitLink.style.textShadow = `0 0 ${Math.round(fs / 3)}px #fff, 0 0 ${Math.round(fs / 2)}px #0F0, 0 0 ${fs}px #0F0`;
+            rabbitLink.style.color = '#0F0';
+        });
+        rabbitLink.addEventListener('mouseleave', () => {
+            const fs = this.calculateFontSize();
+            rabbitLink.style.textShadow = `0 0 ${Math.round(fs / 5)}px #0F0, 0 0 ${Math.round(fs / 3)}px #0F0`;
+            rabbitLink.style.color = '#fff';
+        });
+
+        this._resizeHandler = () => {
+            setupCanvas();
+            const fs = this.calculateFontSize();
+            applyCtxStyles(fs);
+            this.updateRabbitLink(fs);
+        };
         window.addEventListener('resize', this._resizeHandler);
+
+        this.startGlitch(ctx, staticText, canvas);
     },
 
-    startGlitch(ctx, textX, textY, staticText, targetText, boundingBox, canvas) {
+    startGlitch(ctx, staticText, canvas) {
         let lastTime = 0;
         const glitchInterval = 200;
 
         const glitchEffect = (currentTime) => {
             if (currentTime - lastTime > glitchInterval) {
-                const glitchedTarget = targetText
-                    .split("")
-                    .map(char => {
-                        if (Math.random() < 0.3) {
-                            return this.chars[Math.floor(Math.random() * this.chars.length)];
-                        }
-                        return char;
-                    })
-                    .join("");
+                const fontSize = this.calculateFontSize();
+                const textX = canvas.width / 2;
+                // "FOLLOW THE" sits above center; "WHITE RABBIT" DOM link sits below
+                const textY = canvas.height / 2 - Math.round(fontSize * 0.7);
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = `bold ${fontSize}px 'Courier New'`;
+                ctx.shadowColor = '#0F0';
+                ctx.shadowBlur = Math.round(fontSize / 5);
 
                 if (Math.random() < 0.05) {
                     ctx.fillStyle = '#0F0';
                     const offset = Math.random() * 5;
-                    ctx.fillText(staticText + glitchedTarget, textX + offset, textY);
+                    ctx.fillText(staticText, textX + offset, textY);
                     ctx.fillStyle = '#FFF';
-                    ctx.fillText(staticText + glitchedTarget, textX - offset, textY);
+                    ctx.fillText(staticText, textX - offset, textY);
                 } else {
                     ctx.fillStyle = '#FFF';
-                    ctx.fillText(staticText + glitchedTarget, textX, textY);
+                    ctx.fillText(staticText, textX, textY);
                 }
 
                 lastTime = currentTime;
@@ -134,6 +163,7 @@ const GlitchText = {
             window.removeEventListener('resize', this._resizeHandler);
             this._resizeHandler = null;
         }
+        this._rabbitLink = null;
     }
 };
 
@@ -188,7 +218,6 @@ const GlitchText = {
         openingVideo.style.objectFit = 'cover';
 
         openingVideoContainer.appendChild(openingVideo);
-
         openingVideo.load();
     }
 
@@ -203,10 +232,8 @@ const GlitchText = {
             startIntroAfterVideo();
             return;
         }
-
         openingVideoContainer.style.transition = 'opacity 0.8s';
         openingVideoContainer.style.opacity = '0';
-
         setTimeout(() => {
             removeOpeningVideo();
             startIntroAfterVideo();
@@ -295,18 +322,15 @@ const GlitchText = {
 
     typingText.style.opacity = '0';
 
-    /* Audio init */
     function initializeAudio() {
         if (audioInitialized) return;
 
         initMatrixAudio();
-
         const promises = [];
 
         if (matrixAudio) {
             const prevMuted = matrixAudio.muted;
             matrixAudio.muted = true;
-
             promises.push(
                 matrixAudio.play()
                     .then(() => {
@@ -314,16 +338,13 @@ const GlitchText = {
                         matrixAudio.currentTime = 0;
                         matrixAudio.muted = prevMuted;
                     })
-                    .catch(() => {
-                        matrixAudio.muted = prevMuted;
-                    })
+                    .catch(() => { matrixAudio.muted = prevMuted; })
             );
         }
 
         typewriterAudioPool.forEach(audio => {
             const prevMuted = audio.muted;
             audio.muted = true;
-
             promises.push(
                 audio.play()
                     .then(() => {
@@ -331,25 +352,22 @@ const GlitchText = {
                         audio.currentTime = 0;
                         audio.muted = prevMuted;
                     })
-                    .catch(() => {
-                        audio.muted = prevMuted;
-                    })
+                    .catch(() => { audio.muted = prevMuted; })
             );
         });
 
         Promise.all(promises)
-            .then(() => {
-                audioInitialized = true;
-            })
-            .catch(() => {
-                audioInitialized = true;
-            });
+            .then(() => { audioInitialized = true; })
+            .catch(() => { audioInitialized = true; });
     }
 
     blackOverlay.addEventListener('click', handleInitialClick);
     blackOverlay.addEventListener('touchstart', handleInitialClick);
 
     function handleInitialClick() {
+        blackOverlay.removeEventListener('click', handleInitialClick);
+        blackOverlay.removeEventListener('touchstart', handleInitialClick);
+
         playOpeningVideo();
 
         blackOverlay.style.transition = 'opacity 0.6s';
@@ -362,7 +380,6 @@ const GlitchText = {
         }, 600);
     }
 
-    /* Message Sequence */
     function startSequence() {
         typeMessage(messages[0], () => {
             document.addEventListener("click", handleFirstClick);
@@ -375,9 +392,7 @@ const GlitchText = {
         document.removeEventListener("click", handleFirstClick);
         document.removeEventListener("touchstart", handleFirstClick);
         document.removeEventListener("keydown", handleFirstKeydown);
-
         stopAllTypewriterSounds();
-
         deleteMessage(() => {
             setTimeout(showSecondMessage, 500);
         });
@@ -389,7 +404,6 @@ const GlitchText = {
         }
     }
 
-    /* Sound Control */
     function stopAllTypewriterSounds() {
         activeTypewriterSounds.forEach(audio => {
             try {
@@ -402,25 +416,19 @@ const GlitchText = {
 
     function playTypewriterSound() {
         if (!audioInitialized || !canStartAudio) return null;
-
         try {
             const audio = typewriterAudioPool[audioIndex];
             audio.currentTime = 0;
-
             audio.play().catch(() => {});
-
             activeTypewriterSounds.push(audio);
-
             setTimeout(() => {
                 const idx = activeTypewriterSounds.indexOf(audio);
                 if (idx > -1) activeTypewriterSounds.splice(idx, 1);
             }, isMobileDevice ? 200 : 150);
-
             audioIndex = (audioIndex + 1) % AUDIO_POOL_SIZE;
         } catch {}
     }
 
-    /* Typing & Deleting Text */
     function typeMessage(message, callback) {
         charIndex = 0;
         stopAllTypewriterSounds();
@@ -430,11 +438,9 @@ const GlitchText = {
                 playTypewriterSound();
                 typingText.textContent = message.slice(0, charIndex + 1);
                 charIndex++;
-
                 const randomDelay = isMobileDevice
                     ? Math.floor(Math.random() * 180) + 70
                     : Math.floor(Math.random() * 150) + 50;
-
                 setTimeout(type, randomDelay);
             } else if (callback) {
                 stopAllTypewriterSounds();
@@ -452,11 +458,9 @@ const GlitchText = {
             if (charIndex > 0) {
                 typingText.textContent = typingText.textContent.slice(0, charIndex - 1);
                 charIndex--;
-
                 const randomDelay = isMobileDevice
                     ? Math.floor(Math.random() * 70) + 40
                     : Math.floor(Math.random() * 50) + 30;
-
                 setTimeout(erase, randomDelay);
             } else if (callback) callback();
         }
@@ -472,7 +476,6 @@ const GlitchText = {
         });
     }
 
-    /* Matrix Canvas */
     function startMatrixExperience() {
         const matrixContainer = document.getElementById("matrixContainer");
         const overlayText = document.getElementById("overlayText");
@@ -481,7 +484,7 @@ const GlitchText = {
         matrixContainer.classList.remove("hidden");
         overlayText.classList.remove("hidden");
 
-        const matrix = new MatrixRain('matrixContainer');
+        new MatrixRain('matrixContainer');
 
         setTimeout(() => {
             if (typeof GlitchText !== "undefined") {
@@ -492,19 +495,8 @@ const GlitchText = {
         if (audioInitialized && messageSequenceComplete && matrixAudio && canStartAudio) {
             matrixAudio.play().catch(() => {});
         }
-
-        setTimeout(() => {
-            const infoContainer = document.getElementById("infoContainer");
-            infoContainer.classList.remove("hidden");
-            infoContainer.style.opacity = "0";
-            requestAnimationFrame(() => {
-                infoContainer.style.transition = "opacity 1s ease-in-out";
-                infoContainer.style.opacity = "1";
-            });
-        }, 2000);
     }
 
-    /* Matrix Rain */
     class MatrixRain {
         constructor(containerId, fontSize = 16) {
             this.container = document.getElementById(containerId);
@@ -560,12 +552,13 @@ const GlitchText = {
                 this.fontSize = 16;
             }
 
-            this.columns = Math.ceil(this.canvas.width / this.fontSize) + 1;
+            const newColumns = Math.ceil(this.canvas.width / this.fontSize) + 1;
             this.ctx.font = `${this.fontSize}px monospace`;
 
-            isMobileDevice = window.innerWidth <= 768;
-
-            this.initDrops();
+            if (newColumns !== this.columns) {
+                this.columns = newColumns;
+                this.initDrops();
+            }
         }
 
         initDrops() {
@@ -578,21 +571,17 @@ const GlitchText = {
         animate() {
             this.ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
             this.ctx.fillStyle = "#0F0";
 
             for (let i = 0; i < this.drops.length; i++) {
-                const char =
-                    this.characters[Math.floor(Math.random() * this.characters.length)];
+                const char = this.characters[Math.floor(Math.random() * this.characters.length)];
                 const x = i * this.fontSize - 1;
                 const y = this.drops[i] * this.fontSize;
-
                 this.ctx.fillText(char, x, y);
 
                 if (y > this.canvas.height && Math.random() > 0.975) {
                     this.drops[i] = 0;
                 }
-
                 this.drops[i] += 0.7;
             }
 
@@ -616,14 +605,6 @@ const GlitchText = {
         }
     }
 
-    window.addEventListener("resize", () => {
-        if (GlitchText.isRunning) {
-            const overlayText = document.getElementById("overlayText");
-            while (overlayText.firstChild) overlayText.removeChild(overlayText.firstChild);
-            GlitchText.init(overlayText);
-        }
-    });
-
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) stopAllTypewriterSounds();
     });
@@ -631,7 +612,7 @@ const GlitchText = {
     window.addEventListener("orientationchange", () => {
         setTimeout(() => {
             isMobileDevice = window.innerWidth <= 768;
-        }, 200);
+        }, 300);
     });
 
 })();
